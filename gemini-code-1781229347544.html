@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trình chuyển đổi Ảnh sang Hex Casio 580</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        canvas {
+            image-rendering: -moz-crisp-edges;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            image-rendering: pixelated;
+        }
+        [contenteditable="true"] { caret-color: transparent; outline: none; }
+    </style>
+</head>
+<body class="bg-gray-50 p-6 font-sans text-gray-800 min-h-screen">
+    <div class="max-w-6xl mx-auto space-y-6">
+        
+        <header class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <div class="p-3 bg-blue-50 text-blue-600 rounded-xl">
+                    <i data-lucide="image"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Chuyển Ảnh sang Hex Casio</h1>
+                    <p class="text-gray-500 text-sm">Hỗ trợ sao chép mọi ảnh từ Google Images, Web và Win+Shift+S</p>
+                </div>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <div class="lg:col-span-5 space-y-6">
+                
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center text-gray-800">
+                        <i data-lucide="clipboard" class="mr-2 w-5 h-5 text-gray-400"></i> Nhập ảnh trực tiếp
+                    </h2>
+                    
+                    <div id="pasteArea" contenteditable="true" class="border-2 rounded-xl p-8 text-center transition-all duration-300 select-none cursor-pointer overflow-hidden relative border-blue-200 bg-blue-50/10 hover:border-blue-400 hover:bg-blue-50/30">
+                        <div contenteditable="false" class="flex flex-col items-center pointer-events-none" id="pasteContentNormal">
+                            <div class="p-3 rounded-full mb-4 bg-blue-600 text-white shadow-sm">
+                                <i data-lucide="clipboard" class="w-6 h-6"></i>
+                            </div>
+                            <span class="text-[15px] font-bold text-blue-800 mb-2">Sẵn sàng nhận ảnh!</span>
+                            <div class="text-xs text-gray-500 space-y-1.5 bg-white/60 p-2.5 rounded-lg border border-blue-100 text-left">
+                                <p>🔹 Chuột phải vào đây chọn <b>Dán (Paste)</b></p>
+                                <p>🔹 Hoặc ấn <kbd class="font-mono bg-white border px-1 rounded text-gray-700">Ctrl+V</kbd></p>
+                            </div>
+                        </div>
+                        <div contenteditable="false" class="flex flex-col items-center pointer-events-none hidden" id="pasteContentSuccess">
+                            <div class="p-3 rounded-full mb-4 bg-green-600 text-white animate-bounce">
+                                <i data-lucide="check-circle" class="w-6 h-6"></i>
+                            </div>
+                            <span class="text-sm font-bold text-green-600">Đã nhận ảnh mới!</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center text-gray-800">
+                        <i data-lucide="settings-2" class="mr-2 w-5 h-5 text-gray-400"></i> Cấu hình mã xuất ra
+                    </h2>
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Rộng (px)</label>
+                                <input type="number" id="imgWidth" value="192" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Cao (px)</label>
+                                <input type="number" id="imgHeight" value="63" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+                            </div>
+                        </div>
+
+                        <div class="pt-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Độ nhạy màu xám: <span id="thresholdVal">128</span></label>
+                            <input type="range" id="threshold" min="1" max="255" value="128" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600" />
+                        </div>
+
+                        <div class="flex items-center space-x-4 pt-2">
+                            <div class="flex items-center">
+                                <input type="checkbox" id="invert" class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
+                                <label for="invert" class="ml-2 text-sm text-gray-700 select-none cursor-pointer">Đảo màu</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" id="lineBreak" checked class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
+                                <label for="lineBreak" class="ml-2 text-sm text-gray-700 select-none cursor-pointer">Xuống dòng</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-7 flex flex-col space-y-6">
+                
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <h2 class="text-lg font-semibold mb-4 text-gray-800">Mô phỏng màn hình</h2>
+                    <div class="bg-gray-100 rounded-xl flex items-center justify-center p-4 overflow-x-auto min-h-[120px]" id="previewContainer">
+                        <span id="previewPlaceholder" class="text-gray-400 text-sm">Chưa có ảnh nào được dán vào.</span>
+                        <div id="canvasWrapper" class="hidden bg-[#9bb29c] p-2 rounded-md border-4 border-gray-400 shadow-inner">
+                            <canvas id="previewCanvas" class="border border-black/10 mix-blend-multiply w-full h-auto"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex-1 flex flex-col">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-semibold text-gray-800 flex items-center">
+                            <i data-lucide="code" class="mr-2 w-5 h-5 text-gray-400"></i> Mã nguồn (Kết quả)
+                        </h2>
+                        <button id="copyBtn" disabled class="flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-all bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm">
+                            <i data-lucide="copy" class="w-4 h-4 mr-2" id="copyIcon"></i>
+                            <i data-lucide="check" class="w-4 h-4 mr-2 hidden" id="checkIcon"></i>
+                            <span id="copyText">Sao chép mã</span>
+                        </button>
+                    </div>
+                    
+                    <textarea id="hexOutput" readonly spellcheck="false" placeholder="Mã Hex sẽ xuất hiện tại đây..." class="flex-1 w-full border rounded-xl p-4 font-mono text-sm outline-none focus:ring-2 focus:ring-blue-500 resize-none min-h-[300px] bg-gray-50 border-gray-200 text-gray-800 whitespace-pre overflow-auto"></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        const pasteArea = document.getElementById('pasteArea');
+        const pasteNormal = document.getElementById('pasteContentNormal');
+        const pasteSuccess = document.getElementById('pasteContentSuccess');
+        const imgWidth = document.getElementById('imgWidth');
+        const imgHeight = document.getElementById('imgHeight');
+        const threshold = document.getElementById('threshold');
+        const thresholdVal = document.getElementById('thresholdVal');
+        const invert = document.getElementById('invert');
+        const lineBreak = document.getElementById('lineBreak');
+        const hexOutput = document.getElementById('hexOutput');
+        const copyBtn = document.getElementById('copyBtn');
+        const previewCanvas = document.getElementById('previewCanvas');
+        const canvasWrapper = document.getElementById('canvasWrapper');
+        const previewPlaceholder = document.getElementById('previewPlaceholder');
+
+        let currentImageObj = null;
+
+        pasteArea.addEventListener('keydown', (e) => {
+            if (!e.ctrlKey && !e.metaKey && e.key !== 'Tab') e.preventDefault();
+        });
+
+        function processFile(file) {
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    triggerSuccessUI();
+                    loadImageToCanvas(event.target.result);
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        window.addEventListener('paste', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+            const clipboardData = e.clipboardData || window.clipboardData;
+            if (!clipboardData) return;
+
+            let foundImage = false;
+
+            if (clipboardData.files && clipboardData.files.length > 0) {
+                for (let i = 0; i < clipboardData.files.length; i++) {
+                    if (clipboardData.files[i].type.startsWith('image/')) {
+                        processFile(clipboardData.files[i]);
+                        foundImage = true; break;
+                    }
+                }
+            }
+
+            if (!foundImage && clipboardData.items) {
+                for (let i = 0; i < clipboardData.items.length; i++) {
+                    if (clipboardData.items[i].type.startsWith('image/')) {
+                        const file = clipboardData.items[i].getAsFile();
+                        if (file) { processFile(file); foundImage = true; break; }
+                    }
+                }
+            }
+
+            if (!foundImage) {
+                const html = clipboardData.getData('text/html');
+                if (html) {
+                    const match = html.match(/<img[^>]+src="([^">]+)"/);
+                    if (match && match[1]) {
+                        triggerSuccessUI();
+                        loadImageToCanvas(match[1]);
+                        foundImage = true;
+                    }
+                }
+            }
+
+            if (foundImage) {
+                e.preventDefault();
+                pasteArea.innerHTML = '';
+                pasteArea.appendChild(pasteNormal);
+                pasteArea.appendChild(pasteSuccess);
+            }
+        });
+
+        function triggerSuccessUI() {
+            pasteNormal.classList.add('hidden');
+            pasteSuccess.classList.remove('hidden');
+            pasteArea.classList.add('border-green-500', 'bg-green-50');
+            setTimeout(() => {
+                pasteNormal.classList.remove('hidden');
+                pasteSuccess.classList.add('hidden');
+                pasteArea.classList.remove('border-green-500', 'bg-green-50');
+            }, 800);
+        }
+
+        function loadImageToCanvas(src) {
+            const img = new Image();
+            img.onload = () => {
+                currentImageObj = img;
+                generateHex();
+            };
+            img.src = src;
+        }
+
+        function generateHex() {
+            if (!currentImageObj) return;
+
+            previewPlaceholder.classList.add('hidden');
+            canvasWrapper.classList.remove('hidden');
+
+            const w = parseInt(imgWidth.value) || 192;
+            const h = parseInt(imgHeight.value) || 63;
+            const thresh = parseInt(threshold.value);
+            const isInv = invert.checked;
+            const isBreak = lineBreak.checked;
+
+            previewCanvas.style.maxWidth = `${w * 3}px`;
+
+            const offCanvas = document.createElement('canvas');
+            offCanvas.width = w;
+            offCanvas.height = h;
+            const ctx = offCanvas.getContext('2d', { willReadFrequently: true });
+
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, w, h);
+            ctx.drawImage(currentImageObj, 0, 0, w, h);
+
+            previewCanvas.width = w;
+            previewCanvas.height = h;
+            const prevCtx = previewCanvas.getContext('2d');
+
+            let imgData;
+            try {
+                imgData = ctx.getImageData(0, 0, w, h);
+            } catch (error) {
+                hexOutput.value = "⚠️ LỖI BẢO MẬT TRÌNH DUYỆT (CORS)";
+                copyBtn.disabled = true;
+                return;
+            }
+
+            copyBtn.disabled = false;
+            const data = imgData.data;
+            const previewImgData = prevCtx.createImageData(w, h);
+            const previewData = previewImgData.data;
+
+            let hexArray = [];
+
+            for (let y = 0; y < h; y++) {
+                let rowHex = [];
+                for (let x = 0; x < w; x += 8) {
+                    let byte = 0;
+                    for (let b = 0; b < 8; b++) {
+                        if (x + b < w) {
+                            const i = ((y * w) + (x + b)) * 4;
+                            const r = data[i], g = data[i + 1], bl = data[i + 2];
+                            
+                            const lum = 0.299 * r + 0.587 * g + 0.114 * bl;
+                            let isBlack = lum < thresh;
+                            if (isInv) isBlack = !isBlack;
+
+                            const colorValue = isBlack ? 0 : 255;
+                            previewData[i] = colorValue;
+                            previewData[i+1] = colorValue;
+                            previewData[i+2] = colorValue;
+                            previewData[i+3] = 255;
+
+                            if (isBlack) byte |= (1 << (7 - b));
+                        }
+                    }
+                    
+                    // Format mặc định a8 9f
+                    let byteStr = byte.toString(16).padStart(2, '0');
+                    rowHex.push(byteStr);
+                }
+                
+                // Nối các byte trong cùng một hàng bằng dấu cách
+                hexArray.push(rowHex.join(' '));
+            }
+            
+            prevCtx.putImageData(previewImgData, 0, 0);
+            
+            // Xử lý xuống dòng giữa các hàng hoặc nối liền bằng khoảng trắng
+            const rowSeparator = isBreak ? '\n' : ' ';
+            hexOutput.value = hexArray.join(rowSeparator);
+        }
+
+        const configInputs = [imgWidth, imgHeight, threshold, invert, lineBreak];
+        configInputs.forEach(input => {
+            input.addEventListener('input', () => {
+                if(input.id === 'threshold') thresholdVal.textContent = input.value;
+                generateHex();
+            });
+        });
+
+        copyBtn.addEventListener('click', () => {
+            if(!hexOutput.value || hexOutput.value.includes("LỖI")) return;
+            navigator.clipboard.writeText(hexOutput.value).then(() => {
+                document.getElementById('copyIcon').classList.add('hidden');
+                document.getElementById('checkIcon').classList.remove('hidden');
+                document.getElementById('copyText').textContent = 'Đã chép!';
+                copyBtn.classList.add('bg-green-100', 'text-green-700');
+                copyBtn.classList.remove('bg-blue-600', 'text-white');
+                setTimeout(() => {
+                    document.getElementById('copyIcon').classList.remove('hidden');
+                    document.getElementById('checkIcon').classList.add('hidden');
+                    document.getElementById('copyText').textContent = 'Sao chép mã';
+                    copyBtn.classList.remove('bg-green-100', 'text-green-700');
+                    copyBtn.classList.add('bg-blue-600', 'text-white');
+                }, 2000);
+            });
+        });
+    </script>
+</body>
+</html>
